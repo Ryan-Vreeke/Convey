@@ -1,41 +1,58 @@
 #include "WSFrame.h"
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <iostream>
+#include <sys/types.h>
+#include <unistd.h>
+#include <vector>
 
-WSFrame::WSFrame(uint8_t *buffer, size_t len) : m_buffer(buffer), m_len(len) {
+WSFrame::WSFrame(uint8_t *buffer, size_t len, int socket)
+    : m_buffer(buffer), m_len(len), m_socket(socket) {
   m_fin = (buffer[0] >> 7);
-  m_opcode = buffer[0] & 0x0F;
+  m_opcode = OPCODE(buffer[0] & 0x0F);
   m_isMask = (buffer[1] >> 7);
 
   getPayloadLen();
 
   if (m_isMask) {
     memcpy(m_mask, &buffer[maskStart], 4);
+    maskStart += 4;
   }
 
-  extractPayload();
+  extractPayload(&buffer[maskStart], len - maskStart);
 }
 
-WSFrame::~WSFrame() { delete[] m_payload; }
+WSFrame::~WSFrame() {}
 
-void WSFrame::extractPayload() {
+void WSFrame::extractPayload(uint8_t *buffer, size_t len) {
   m_payload = new uint8_t[m_payloadLen + 1];
+  constexpr int CHUNKSIZE = 4096;
 
-  if (m_isMask)
-    maskStart += 4;
+  uint8_t buf[CHUNKSIZE];
+  memcpy(buf, buffer, len);
 
-  if (m_isMask) {
-    size_t i;
-    for (i = 0; i < m_payloadLen; i++) {
-      m_payload[i] = m_buffer[maskStart + i] ^ m_mask[i % 4];
+  for (int j = 0; j < m_payloadLen;) {
+    int bytes = read(m_socket, buf, CHUNKSIZE);
+    if(bytes <= 0)
+      break;
+
+    for (int i = 0; i < CHUNKSIZE; i++) {
+      m_payload[j + i] = decode(buf[i % 4096], i % 4);
     }
 
-    m_payload[i] = 0;
-  } else {
-    memcpy(m_payload, &m_buffer[maskStart], m_payloadLen);
+    j += bytes;
   }
+}
+
+uint8_t WSFrame::decode(uint8_t byte, uint8_t index) {
+  if (m_isMask) {
+    return (byte ^ m_mask[index]);
+  }
+
+  return byte;
 }
 
 void WSFrame::getPayloadLen() {

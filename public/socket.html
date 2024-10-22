@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Image Uploader</title>
+</head>
+<body>
+    <h1>WebSocket Image Uploader</h1>
+    
+    <!-- Button to connect to WebSocket -->
+    <button id="connectBtn">Connect to WebSocket</button>
+    <br><br>
+
+    <!-- Button to send the image -->
+    <input type="file" id="imageInput" accept="image/*">
+    <button id="sendBtn" disabled>Send Image</button>
+    
+    <!-- Log output -->
+    <pre id="log"></pre>
+
+    <script>
+        let socket = null;
+
+        // Reference to log output
+        const logOutput = document.getElementById('log');
+        
+        // Connect button
+        const connectBtn = document.getElementById('connectBtn');
+        connectBtn.addEventListener('click', () => {
+            if (!socket || socket.readyState === WebSocket.CLOSED) {
+                socket = new WebSocket('ws://localhost:8000');  // Change to your WebSocket server address
+
+                // Log when connected
+                socket.onopen = () => {
+                    log('Connected to WebSocket server');
+                    document.getElementById('sendBtn').disabled = false; // Enable the send button
+                };
+
+                // Log when there's an error
+                socket.onerror = (error) => {
+                    log('WebSocket error: ' + error.message);
+                };
+
+                // Log on message received
+                socket.onmessage = (message) => {
+                    log('Received from server: ' + message.data);
+                };
+
+                // Log when closed
+                socket.onclose = () => {
+                    log('WebSocket connection closed');
+                    document.getElementById('sendBtn').disabled = true;
+                };
+            }
+        });
+
+        // Send button and file input
+        const sendBtn = document.getElementById('sendBtn');
+        const imageInput = document.getElementById('imageInput');
+        sendBtn.addEventListener('click', () => {
+            const file = imageInput.files[0];
+            if (file && socket && socket.readyState === WebSocket.OPEN) {
+                const reader = new FileReader();
+                reader.onload = (event) => { const binaryData = event.target.result;
+                    log('Sending image to server...');
+                    socket.send(binaryData);  // Send binary data over WebSocket
+                };
+                
+                reader.readAsArrayBuffer(file);  // Read file as binary (ArrayBuffer)
+            } else {
+                log('No file selected or WebSocket not connected');
+            }
+        });
+
+        // Log function for output
+        function log(message) {
+            logOutput.textContent += message + '\n';
+        }
+    </script>
+</body>
+</html>

@@ -20,7 +20,7 @@ int main(void) {
       std::cout << len << ": " << ws->m_socket << std::endl;
     };
 
-    ws->onClose([]() { std::cout << "client disconnected" << std::endl; });
+    ws->onClose([](std::string reason) { std::cout << "client disconnected" << std::endl; });
   });
 
   server.startListen(PORT, []() -> void {

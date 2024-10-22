@@ -4,10 +4,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <iostream>
 #include <sys/types.h>
 #include <unistd.h>
-#include <vector>
+#include <iostream>
 
 WSFrame::WSFrame(uint8_t *buffer, size_t len, int socket)
     : m_buffer(buffer), m_len(len), m_socket(socket) {
@@ -28,23 +27,33 @@ WSFrame::WSFrame(uint8_t *buffer, size_t len, int socket)
 WSFrame::~WSFrame() {}
 
 void WSFrame::extractPayload(uint8_t *buffer, size_t len) {
-  m_payload = new uint8_t[m_payloadLen + 1];
   constexpr int CHUNKSIZE = 4096;
+  m_payload = new uint8_t[m_payloadLen + 1];
+
+  for (size_t i = 0; i < len; i++) {
+    m_payload[i] = decode(buffer[i], i % 4);
+  }
+
+  if (m_payloadLen <= 125) {
+    m_payload[m_payloadLen] = 0;
+    return;
+  }
 
   uint8_t buf[CHUNKSIZE];
-  memcpy(buf, buffer, len);
+  int bytes = 0;
 
-  for (int j = 0; j < m_payloadLen;) {
-    int bytes = read(m_socket, buf, CHUNKSIZE);
-    if(bytes <= 0)
+  for (size_t j = len; j < m_payloadLen;) {
+    if ((bytes = read(m_socket, buf, CHUNKSIZE)) <= 0)
       break;
 
-    for (int i = 0; i < CHUNKSIZE; i++) {
-      m_payload[j + i] = decode(buf[i % 4096], i % 4);
+    for (int i = 0; i < bytes; i++) {
+      m_payload[j + i] = decode(buf[i], i % 4);
     }
 
     j += bytes;
   }
+
+  std::cout << "finished extracting payload\n";
 }
 
 uint8_t WSFrame::decode(uint8_t byte, uint8_t index) {

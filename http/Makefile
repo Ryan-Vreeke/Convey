@@ -1,6 +1,6 @@
 CC = g++
 CFLAGS = -Wall -g -Iinclude
-SRC = src/main.cpp src/server.cpp src/request.cpp src/response.cpp src/WebSocketServer.cpp src/WebSocket.cpp src/WSFrame.cpp
+SRC = src/main.cpp src/server.cpp src/request.cpp src/response.cpp src/WebSocketServer.cpp src/WebSocket.cpp src/WSFrame.cpp src/WSMessage.cpp
 CCLIB = -lssl -lcrypto
 
 Server: clean

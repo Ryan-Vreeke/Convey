@@ -1,15 +1,14 @@
 #include "WebSocket.h"
 #include "WSFrame.h"
+#include "WSMessage.h"
 #include <cstdint>
-#include <iostream>
 #include <netinet/in.h>
 #include <unistd.h>
-#include <vector>
 
 WebSocket::WebSocket(int socket, sockaddr_in address)
     : m_socket(socket), m_address(address) {}
 
-void WebSocket::onMessage(std::function<void(uint8_t *, size_t)> callback) {
+void WebSocket::onMessage(std::function<void(WSMessage &)> callback) {
   m_messageCallback = callback;
 }
 
@@ -44,7 +43,7 @@ void WebSocket::loop() {
       break;
     }
 
-    std::cout << frame.m_payloadLen;
-    m_messageCallback(frame.m_payload, frame.m_payloadLen);
+    WSMessage msg{frame.m_payload, frame.m_payloadLen, frame.m_opcode};
+    m_messageCallback(msg);
   }
 }

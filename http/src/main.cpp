@@ -3,23 +3,24 @@
 #include "server.h"
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <iostream>
+#include <memory>
 
 #define PORT 8000
 int main(void) {
   Server server("./public");
   WebSocketServer wss(server);
 
-  wss.onConnect([](WebSocket &ws) -> void {
-    std::cout << "client" << ws.m_address.sin_addr.s_addr << " connected\n";
+  wss.onConnect([](std::shared_ptr<WebSocket> ws) -> void {
+    std::cout << "client: " << ws->m_socket << " connected\n";
 
-    ws.onMessage([](uint8_t *message, size_t len) -> void {
-      std::cout << "hello" << std::endl;
-      std::cout << len << std::endl;
+    ws->m_messageCallback = [ws](uint8_t *message, size_t len) -> void {
+      std::printf("%s\n", message);
+      std::cout << len << ": " << ws->m_socket << std::endl;
+    };
 
-    });
-
-    ws.onClose([]() { std::cout << "client disconnected" << std::endl; });
+    ws->onClose([]() { std::cout << "client disconnected" << std::endl; });
   });
 
   server.startListen(PORT, []() -> void {

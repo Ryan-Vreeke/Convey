@@ -4,6 +4,8 @@
 #include "response.h"
 #include "server.h"
 #include <functional>
+#include <memory>
+#include <unordered_map>
 #include <vector>
 
 extern std::string sha1(const std::string &input);
@@ -15,14 +17,14 @@ public:
 
   WebSocketServer(Server &server);
 
-  void onConnect(std::function<void(WebSocket &)>);
-  void onDisconnect(std::function<void(WebSocket &)>);
+  void onConnect(std::function<void(std::shared_ptr<WebSocket>)> callback);
+  void onDisconnect(int wSocket);
 
 private:
   Server &m_server;
-  std::vector<WebSocket> m_clients;
-  std::function<void(WebSocket &)> m_clientConnect;
-  std::function<void(WebSocket &)> m_clientDisconnect;
+  std::unordered_map<int, std::shared_ptr<WebSocket>> m_clients;
+  std::function<void(std::shared_ptr<WebSocket>)> m_clientConnect;
+  std::function<void(std::shared_ptr<WebSocket>)> m_clientDisconnect;
 
   void clientConnected(Request &, Response &);
 };

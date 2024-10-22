@@ -1,4 +1,5 @@
 #include "WebSocketServer.h"
+#include <memory>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
@@ -22,17 +23,23 @@ void WebSocketServer::clientConnected(Request &req, Response &res) {
 
   res.send("");
 
-  WebSocket ws = WebSocket(res.clientSocket, res.clientAddress);
-  m_clients.push_back(std::move(ws));
+  auto ws = std::make_shared<WebSocket>(res.clientSocket, res.clientAddress);
+  ws->m_serverDisconnect = [this](int i) { onDisconnect(i); };
+  m_clients[ws->m_socket] = ws;
+
   m_clientConnect(ws);
+
+  std::thread wsLoop([ws]() { ws->loop(); });
+  wsLoop.detach();
 }
 
-void WebSocketServer::onConnect(std::function<void(WebSocket&)> callback) {
+void WebSocketServer::onConnect( std::function<void(std::shared_ptr<WebSocket>)> callback) {
   m_clientConnect = callback;
 }
 
-void WebSocketServer::onDisconnect(std::function<void(WebSocket&)> callback) {
-  m_clientDisconnect = callback;
+void WebSocketServer::onDisconnect(int wSocket) {
+  m_clients.erase(wSocket);
+  close(wSocket);
 }
 
 std::string sha1(const std::string &input) {

@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <netinet/in.h>
 #include <thread>
 
@@ -11,11 +12,12 @@ public:
   const int m_socket;
   const sockaddr_in m_address;
   std::function<void(uint8_t *, size_t)> m_messageCallback;
+  std::function<void(int)> m_serverDisconnect;
   std::function<void(void)> m_closeCallback;
-  bool message = false;
   bool close = false;
 
   WebSocket(int socket, sockaddr_in address);
+  void loop();
 
   void onMessage(std::function<void(uint8_t *, size_t)>);
   void onClose(std::function<void(void)>);
@@ -24,5 +26,4 @@ public:
 private:
   std::thread loopThread;
 
-  void loop();
 };

@@ -1,26 +1,19 @@
 #include "WebSocket.h"
+#include "WSFrame.h"
 #include <cstdint>
 #include <iostream>
 #include <netinet/in.h>
 #include <unistd.h>
 
 WebSocket::WebSocket(int socket, sockaddr_in address)
-    : m_socket(socket), m_address(address) {
-
-  loopThread = std::thread([this]() { this->loop(); });
-  loopThread.detach();
-}
+    : m_socket(socket), m_address(address) {}
 
 void WebSocket::onMessage(std::function<void(uint8_t *, size_t)> callback) {
-  std::cout << "created onMessage\n";
   m_messageCallback = callback;
-  message = true;
 }
 
 void WebSocket::onClose(std::function<void(void)> callback) {
-  std::cout << "created onClose\n";
   m_closeCallback = callback;
-  close = true;
 }
 
 void WebSocket::send() {}
@@ -30,13 +23,19 @@ void WebSocket::loop() {
   size_t bytes;
 
   while (!close) {
-    if ((bytes = read(m_socket, buf, sizeof(buf))) == 0)
-      continue;
+    if ((bytes = read(m_socket, buf, sizeof(buf))) == 0) {
+      close = true;
+      m_serverDisconnect(m_socket);
+      m_closeCallback();
+      break;
+    }
 
-    if (!message)
+    if (!m_messageCallback) {
+      std::cout << "callback not set" << std::endl;
       continue;
+    }
 
-    // TODO: get payload
-    m_messageCallback(buf, bytes);
+    WSFrame frame(buf, bytes);
+    m_messageCallback(frame.m_payload, frame.m_payloadLen);
   }
 }

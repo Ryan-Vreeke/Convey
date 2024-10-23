@@ -13,7 +13,7 @@ int main(void) {
   wss.onConnect([](std::shared_ptr<WebSocket> ws) -> void {
     std::cout << "client: " << ws->m_socket << " connected\n";
 
-    ws->m_messageCallback = [&ws](WSMessage &msg) -> void {
+    ws->m_messageCallback = [ws](WSMessage &msg) -> void {
       std::cout << msg.m_size << ": " << ws->m_socket << std::endl;
       std::cout << msg << std::endl;
 

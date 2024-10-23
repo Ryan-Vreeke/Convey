@@ -45,6 +45,7 @@
                 // Log on message received
                 socket.onmessage = (message) => {
                     log('Received from server: ' + message.data);
+                    console.log(message.data);
                 };
 
                 // Log when closed

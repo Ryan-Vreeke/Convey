@@ -5,49 +5,45 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <iostream>
 #include <sys/types.h>
 #include <unistd.h>
 
-WSFrame::WSFrame(uint8_t *buffer, size_t len, int socket)
-    : m_buffer(buffer), m_len(len), m_socket(socket) {
+WSFrame::WSFrame(uint8_t *buffer, size_t len, int socket) : m_len(len), m_socket(socket) {
 
-  m_fin = (buffer[0] >> 7);
-  m_opcode = OPCODE(buffer[0] & 0x0F);
-  m_isMask = (buffer[1] >> 7);
+  m_buffer = new uint8_t[len];
+  memcpy(m_buffer, buffer, len);
+  m_fin = (m_buffer[0] >> 7);
+  m_opcode = OPCODE(m_buffer[0] & 0x0F);
+  m_isMask = (m_buffer[1] >> 7);
 
   getPayloadLen();
 
   if (m_isMask) {
-    memcpy(m_mask, &buffer[maskStart], 4);
+    memcpy(m_mask, &m_buffer[maskStart], 4);
     maskStart += 4;
   }
 
-  extractPayload(&buffer[maskStart], len - maskStart);
+  extractPayload(&m_buffer[maskStart], len - maskStart);
 }
 
 WSFrame::WSFrame() : m_mask{0}, m_payloadLen(0), m_fin(true), m_isMask(false) {}
 
 WSFrame::~WSFrame() {
-  if (m_buffer) {
-    delete[] m_buffer;
-    m_buffer = nullptr;
-  }
-
-  if (m_payload) {
-    delete[] m_payload;
-    m_payload = nullptr;
-  }
+  delete[] m_buffer;
+  delete[] m_payload;
 }
 
 void WSFrame::EncodePayload(const uint8_t *buffer, size_t len) {
   int offset = 0;
 
-  m_buffer = new uint8_t[len + 10];
   m_payloadLen = len;
+  m_buffer = new uint8_t[len + 10];
+  m_payload = new uint8_t[len];
+  memcpy(m_payload, buffer, len);
 
   m_buffer[0] = (m_fin ? 0x80 : 0x00) | m_opcode;
-  m_buffer[1] = (m_isMask ? 0x80 : 0x00) | (len <= 125 ? len : (len == 126 ? 126 : 127));
+  m_buffer[1] =
+      (m_isMask ? 0x80 : 0x00) | (len <= 125 ? len : (len == 126 ? 126 : 127));
 
   if (len <= 125) {
     m_len = len + 2;
@@ -62,7 +58,7 @@ void WSFrame::EncodePayload(const uint8_t *buffer, size_t len) {
     *(uint64_t *)(m_buffer + 2) = (uint64_t)htobe64(len);
   }
 
-  memcpy(&m_buffer[offset], buffer, m_payloadLen);
+  memcpy(&m_buffer[offset], m_payload, m_payloadLen);
 }
 
 void WSFrame::extractPayload(const uint8_t *buffer, size_t len) {

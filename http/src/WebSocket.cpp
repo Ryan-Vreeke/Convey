@@ -3,6 +3,7 @@
 #include "WSMessage.h"
 #include <cstdint>
 #include <netinet/in.h>
+#include <sys/socket.h>
 #include <unistd.h>
 #include <vector>
 
@@ -21,6 +22,7 @@ void WebSocket::send(const std::string &payload) {
   WSFrame frame{};
   frame.m_opcode = TEXT;
   frame.EncodePayload(reinterpret_cast<const uint8_t *>(payload.c_str()), payload.length());
+  ::send(m_socket, frame.m_buffer, frame.m_len, 0);
 }
 
 void WebSocket::send(const uint8_t *payload, size_t len) {
@@ -29,12 +31,10 @@ void WebSocket::send(const uint8_t *payload, size_t len) {
   frame.EncodePayload(payload, len);
 }
 
-void WebSocket::send(const std::vector<uint8_t>& payload) {
+void WebSocket::send(const std::vector<uint8_t> &payload) {
   WSFrame frame{};
   frame.m_opcode = BINARY;
   frame.EncodePayload(payload.data(), payload.size());
-
-
 }
 
 void WebSocket::loop() {
@@ -56,6 +56,7 @@ void WebSocket::loop() {
     }
 
     WSFrame frame(buf, bytes, m_socket);
+    std::cout << "socket: " << m_socket << std::endl;
 
     if (frame.m_opcode == CLOSE) {
       close = true;

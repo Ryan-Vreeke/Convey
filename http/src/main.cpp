@@ -2,7 +2,6 @@
 #include "WebSocketServer.h"
 #include "server.h"
 #include <cstdio>
-#include <fstream>
 #include <iostream>
 #include <memory>
 
@@ -16,16 +15,9 @@ int main(void) {
 
     ws->m_messageCallback = [&ws](WSMessage &msg) -> void {
       std::cout << msg.m_size << ": " << ws->m_socket << std::endl;
+      std::cout << msg << std::endl;
 
-      std::ofstream file("./test.png", std::ios::binary);
-      file.write(reinterpret_cast<const char *>(msg.m_msg), msg.m_size);
-      file.close();
-
-      if (file.good()) {
-        std::cout << "PNG file written successfully!" << std::endl;
-      } else {
-        std::cerr << "Error: Failed to write PNG file." << std::endl;
-      }
+      ws->send("hello");
     };
 
     ws->onClose([](std::string reason) {

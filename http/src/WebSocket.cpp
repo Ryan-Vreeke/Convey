@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <vector>
 
 WebSocket::WebSocket(int socket, sockaddr_in address)
     : m_socket(socket), m_address(address) {}
@@ -16,11 +17,31 @@ void WebSocket::onClose(std::function<void(std::string)> callback) {
   m_closeCallback = callback;
 }
 
-void WebSocket::send() {}
+void WebSocket::send(const std::string &payload) {
+  WSFrame frame{};
+  frame.m_opcode = TEXT;
+  frame.EncodePayload(reinterpret_cast<const uint8_t *>(payload.c_str()), payload.length());
+}
+
+void WebSocket::send(const uint8_t *payload, size_t len) {
+  WSFrame frame{};
+  frame.m_opcode = BINARY;
+  frame.EncodePayload(payload, len);
+}
+
+void WebSocket::send(const std::vector<uint8_t>& payload) {
+  WSFrame frame{};
+  frame.m_opcode = BINARY;
+  frame.EncodePayload(payload.data(), payload.size());
+
+
+}
 
 void WebSocket::loop() {
   uint8_t buf[4096];
   size_t bytes;
+  std::vector<uint8_t> msgBuffer;
+  WSMessage msg;
 
   while (!close) {
     if ((bytes = read(m_socket, buf, sizeof(buf))) == 0) {
@@ -39,11 +60,27 @@ void WebSocket::loop() {
     if (frame.m_opcode == CLOSE) {
       close = true;
       m_serverDisconnect(m_socket);
-      m_closeCallback(std::string(reinterpret_cast<char *>(frame.m_payload), frame.m_payloadLen));
+      m_closeCallback(std::string(reinterpret_cast<char *>(frame.m_payload),
+                                  frame.m_payloadLen));
       break;
     }
 
-    WSMessage msg{frame.m_payload, frame.m_payloadLen, frame.m_opcode};
+    if (frame.m_opcode == CONTINUE) {
+      msgBuffer.insert(msgBuffer.begin(), frame.m_payload,
+                       frame.m_payload + frame.m_payloadLen);
+      continue;
+    }
+
+    if (msgBuffer.size() > 0) {
+      msg.m_msg = msgBuffer.data();
+      msg.m_size = msgBuffer.size();
+      msgBuffer.clear();
+    } else {
+      msg.m_msg = frame.m_payload;
+      msg.m_size = frame.m_payloadLen;
+    }
+
+    msg.m_type = frame.m_opcode;
     m_messageCallback(msg);
   }
 }

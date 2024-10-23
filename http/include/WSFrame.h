@@ -1,7 +1,6 @@
 #pragma once
 #include <cstddef>
 #include <cstdint>
-#include <vector>
 
 extern uint16_t make16(uint8_t msb, uint8_t lsb);
 extern uint32_t make32(uint16_t msb, uint16_t lsb);
@@ -28,7 +27,10 @@ public:
   bool m_isMask;
 
   WSFrame(uint8_t *buffer, size_t len, int socket);
+  WSFrame();
   ~WSFrame();
+
+  void EncodePayload(const uint8_t *buffer, size_t len);
 
 private:
   uint8_t maskStart;
@@ -37,7 +39,7 @@ private:
 
   int j = 0;
 
-  void extractPayload(uint8_t *buff, size_t bytesRead);
+  void extractPayload(const uint8_t *buff, size_t bytesRead);
   uint8_t decode(uint8_t byte, uint8_t index);
 
   void getPayloadLen();

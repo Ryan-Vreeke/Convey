@@ -21,7 +21,9 @@ public:
 
   void onMessage(std::function<void(WSMessage &)>);
   void onClose(std::function<void(std::string)>);
-  void send();
+  void send(const std::string &);
+  void send(const uint8_t *payload, size_t len);
+  void send(const std::vector<uint8_t> &payload);
 
 private:
   std::thread loopThread;

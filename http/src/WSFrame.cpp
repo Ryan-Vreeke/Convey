@@ -1,15 +1,17 @@
 #include "WSFrame.h"
+#include <arpa/inet.h>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <iostream>
 #include <sys/types.h>
 #include <unistd.h>
-#include <iostream>
 
 WSFrame::WSFrame(uint8_t *buffer, size_t len, int socket)
     : m_buffer(buffer), m_len(len), m_socket(socket) {
+
   m_fin = (buffer[0] >> 7);
   m_opcode = OPCODE(buffer[0] & 0x0F);
   m_isMask = (buffer[1] >> 7);
@@ -24,9 +26,46 @@ WSFrame::WSFrame(uint8_t *buffer, size_t len, int socket)
   extractPayload(&buffer[maskStart], len - maskStart);
 }
 
-WSFrame::~WSFrame() {}
+WSFrame::WSFrame() : m_mask{0}, m_payloadLen(0), m_fin(true), m_isMask(false) {}
 
-void WSFrame::extractPayload(uint8_t *buffer, size_t len) {
+WSFrame::~WSFrame() {
+  if (m_buffer) {
+    delete[] m_buffer;
+    m_buffer = nullptr;
+  }
+
+  if (m_payload) {
+    delete[] m_payload;
+    m_payload = nullptr;
+  }
+}
+
+void WSFrame::EncodePayload(const uint8_t *buffer, size_t len) {
+  int offset = 0;
+
+  m_buffer = new uint8_t[len + 10];
+  m_payloadLen = len;
+
+  m_buffer[0] = (m_fin ? 0x80 : 0x00) | m_opcode;
+  m_buffer[1] = (m_isMask ? 0x80 : 0x00) | (len <= 125 ? len : (len == 126 ? 126 : 127));
+
+  if (len <= 125) {
+    m_len = len + 2;
+    offset = 2;
+  } else if (len == 126) {
+    m_len = len + 4;
+    offset = 4;
+    *(uint16_t *)(m_buffer + 2) = (uint16_t)htons(len);
+  } else if (len == 127) {
+    m_len = len + 10;
+    offset = 10;
+    *(uint64_t *)(m_buffer + 2) = (uint64_t)htobe64(len);
+  }
+
+  memcpy(&m_buffer[offset], buffer, m_payloadLen);
+}
+
+void WSFrame::extractPayload(const uint8_t *buffer, size_t len) {
   constexpr int CHUNKSIZE = 4096;
   m_payload = new uint8_t[m_payloadLen + 1];
 
@@ -52,8 +91,6 @@ void WSFrame::extractPayload(uint8_t *buffer, size_t len) {
 
     j += bytes;
   }
-
-  std::cout << "finished extracting payload\n";
 }
 
 uint8_t WSFrame::decode(uint8_t byte, uint8_t index) {

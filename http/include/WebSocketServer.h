@@ -3,6 +3,7 @@
 #include "request.h"
 #include "response.h"
 #include "server.h"
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <unordered_map>
@@ -10,6 +11,7 @@
 
 extern std::string sha1(const std::string &input);
 extern std::string base64_encode(const std::string &input);
+extern std::string base64_encode(const std::vector<uint8_t> &input);
 
 class WebSocketServer {
 public:

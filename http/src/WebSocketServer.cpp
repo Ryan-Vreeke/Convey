@@ -33,7 +33,8 @@ void WebSocketServer::clientConnected(Request &req, Response &res) {
   wsLoop.detach();
 }
 
-void WebSocketServer::onConnect( std::function<void(std::shared_ptr<WebSocket>)> callback) {
+void WebSocketServer::onConnect(
+    std::function<void(std::shared_ptr<WebSocket>)> callback) {
   m_clientConnect = callback;
 }
 
@@ -50,6 +51,25 @@ std::string sha1(const std::string &input) {
 }
 
 std::string base64_encode(const std::string &input) {
+  BIO *bio, *b64;
+  BUF_MEM *bufferPtr;
+
+  b64 = BIO_new(BIO_f_base64());
+  bio = BIO_new(BIO_s_mem());
+  bio = BIO_push(b64, bio);
+
+  BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
+  BIO_write(bio, input.data(), input.size());
+  BIO_flush(bio);
+  BIO_get_mem_ptr(bio, &bufferPtr);
+
+  std::string encoded_data(bufferPtr->data, bufferPtr->length);
+  BIO_free_all(bio);
+
+  return encoded_data;
+}
+
+std::string base64_encode(const std::vector<uint8_t> &input) {
   BIO *bio, *b64;
   BUF_MEM *bufferPtr;
 

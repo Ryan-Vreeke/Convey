@@ -30,7 +30,7 @@ public:
   WSFrame();
   ~WSFrame();
 
-  void EncodePayload(const uint8_t *buffer, size_t len);
+  void encodePayload(const uint8_t *buffer, size_t len);
 
 private:
   uint8_t maskStart;

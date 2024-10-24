@@ -8,7 +8,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-WSFrame::WSFrame(uint8_t *buffer, size_t len, int socket) : m_len(len), m_socket(socket) {
+WSFrame::WSFrame(uint8_t *buffer, size_t len, int socket)
+    : m_len(len), m_socket(socket) {
 
   m_buffer = new uint8_t[len];
   memcpy(m_buffer, buffer, len);
@@ -33,8 +34,9 @@ WSFrame::~WSFrame() {
   delete[] m_payload;
 }
 
-void WSFrame::EncodePayload(const uint8_t *buffer, size_t len) {
+void WSFrame::encodePayload(const uint8_t *buffer, size_t len) {
   int offset = 0;
+  size_t lenByte;
 
   m_payloadLen = len;
   m_buffer = new uint8_t[len + 10];
@@ -42,22 +44,24 @@ void WSFrame::EncodePayload(const uint8_t *buffer, size_t len) {
   memcpy(m_payload, buffer, len);
 
   m_buffer[0] = (m_fin ? 0x80 : 0x00) | m_opcode;
-  m_buffer[1] =
-      (m_isMask ? 0x80 : 0x00) | (len <= 125 ? len : (len == 126 ? 126 : 127));
 
   if (len <= 125) {
     m_len = len + 2;
     offset = 2;
-  } else if (len == 126) {
+    lenByte = len;
+  } else if (len < 65535) {
     m_len = len + 4;
     offset = 4;
+    lenByte = 126;
     *(uint16_t *)(m_buffer + 2) = (uint16_t)htons(len);
-  } else if (len == 127) {
+  } else {
     m_len = len + 10;
     offset = 10;
+    lenByte = 127;
     *(uint64_t *)(m_buffer + 2) = (uint64_t)htobe64(len);
   }
 
+  m_buffer[1] = (m_isMask ? 0x80 : 0x00) | lenByte;
   memcpy(&m_buffer[offset], m_payload, m_payloadLen);
 }
 

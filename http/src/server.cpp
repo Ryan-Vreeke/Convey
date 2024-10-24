@@ -7,8 +7,14 @@
 #include <thread>
 #include <unistd.h>
 
-Server::Server(const std::string &publicPath)
-    : server_fd(socket(AF_INET, SOCK_STREAM, 0)), publicDir(publicPath) {
+Server::Server(const std::string publicPath)
+    : server_fd(socket(AF_INET, SOCK_STREAM, 0)) {
+
+  publicDir = publicPath;
+  if (Response::ends_with(publicDir, "/")) {
+    publicDir.pop_back();
+  }
+
   if (server_fd == INVALID_SOCKET) {
     std::cerr << "Socket creation failed. \n";
     cleanup(server_fd);
@@ -31,14 +37,14 @@ Server::~Server() {
 
 void Server::get(std::string path,
                  std::function<void(Request &, Response &)> func) {
-
   if (!Response::ends_with(path, "/"))
     path += "/";
   getMap[path] = func;
 }
 
-void Server::post(std::string path,
-                  std::function<void(Request &, Response &)> func) {
+void Server::post(std::string path, std::function<void(Request &, Response &)> func) {
+  if (!Response::ends_with(path, "/"))
+    path += "/";
   postMap[path] = func;
 }
 
@@ -102,7 +108,6 @@ void Server::cleanup(SOCKET sock) {
 }
 
 void Server::handleClient(Request request, Response response) {
-//TODO: make sure that the upgrade is a websocket
   if (request.headers["Upgrade"] != "") {
     std::cout << request.headers["Upgrade"] << std::endl;
     WSConnected(request, response);

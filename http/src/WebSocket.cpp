@@ -21,20 +21,29 @@ void WebSocket::onClose(std::function<void(std::string)> callback) {
 void WebSocket::send(const std::string &payload) {
   WSFrame frame{};
   frame.m_opcode = TEXT;
-  frame.EncodePayload(reinterpret_cast<const uint8_t *>(payload.c_str()), payload.length());
+  frame.encodePayload(reinterpret_cast<const uint8_t *>(payload.c_str()), payload.length());
   ::send(m_socket, frame.m_buffer, frame.m_len, 0);
 }
 
 void WebSocket::send(const uint8_t *payload, size_t len) {
   WSFrame frame{};
   frame.m_opcode = BINARY;
-  frame.EncodePayload(payload, len);
+  frame.encodePayload(payload, len);
+  ::send(m_socket, frame.m_buffer, frame.m_len, 0);
 }
 
 void WebSocket::send(const std::vector<uint8_t> &payload) {
   WSFrame frame{};
   frame.m_opcode = BINARY;
-  frame.EncodePayload(payload.data(), payload.size());
+  frame.encodePayload(payload.data(), payload.size());
+  ::send(m_socket, frame.m_buffer, frame.m_len, 0);
+}
+
+void WebSocket::send(const std::vector<char> &payload) {
+  WSFrame frame{};
+  frame.m_opcode = BINARY;
+  frame.encodePayload(reinterpret_cast<const uint8_t *>(payload.data()), payload.size());
+  ::send(m_socket, frame.m_buffer, frame.m_len, 0);
 }
 
 void WebSocket::loop() {

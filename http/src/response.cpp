@@ -1,4 +1,5 @@
 #include "response.h"
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -26,8 +27,28 @@ void Response::json(const std::string &jsonData) {
 
 void Response::type(const std::string &type) { contentType = type; }
 
+bool fileExists(const std::string &path) {
+  return std::filesystem::exists(path);
+}
+
+std::string Response::findFileWithExtension(std::string basePath) {
+  if (Response::ends_with(basePath, "/"))
+    basePath.pop_back();
+
+  if (fileExists(basePath))
+    return basePath;
+
+  if (fileExists(basePath + ".html")) {
+    return basePath + ".html";
+  }
+
+  return "";
+}
+
 void Response::sendFile(const std::string &path) {
-  std::ifstream file(path);
+  const std::string actualPath = findFileWithExtension(path);
+  std::ifstream file(actualPath);
+
   if (!file.is_open()) {
     code = "404 Not Found";
     send("File not found");
@@ -39,17 +60,17 @@ void Response::sendFile(const std::string &path) {
   message = buffer.str();
   contentLength = message.size();
 
-  if (ends_with(path, ".html")) {
+  if (ends_with(actualPath, ".html")) {
     contentType = "text/html";
-  } else if (ends_with(path, ".jpg") || ends_with(path, ".jpeg")) {
+  } else if (ends_with(actualPath, ".jpg") || ends_with(actualPath, ".jpeg")) {
     contentType = "image/jpeg";
-  } else if (ends_with(path, ".png")) {
+  } else if (ends_with(actualPath, ".png")) {
     contentType = "image/png";
   } else {
     contentType = "application/octet-stream";
   }
 
-  headers.push_back("Connection: close\r\n");
+  headers.push_back("Connection: close");
   sendResponse();
 
   file.close();

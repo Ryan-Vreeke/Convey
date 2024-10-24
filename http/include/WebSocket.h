@@ -24,6 +24,7 @@ public:
   void send(const std::string &);
   void send(const uint8_t *payload, size_t len);
   void send(const std::vector<uint8_t> &payload);
+  void send(const std::vector<char> &payload);
 
 private:
   std::thread loopThread;

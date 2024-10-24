@@ -28,6 +28,8 @@ private:
   size_t contentLength = 0;
 
 
+  std::string findFileWithExtension(std::string basePath);
+
   void sendResponse();
   std::string generateHeaders();
 };

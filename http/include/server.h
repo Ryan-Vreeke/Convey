@@ -19,11 +19,11 @@ class Server {
 public:
   sockaddr_in address;
   const SOCKET server_fd;
-  const std::string publicDir;
+  std::string publicDir;
   static constexpr int BUF_SIZE = 4096;
 
   Server();
-  Server(const std::string &);
+  Server(const std::string);
   ~Server();
 
   void get(std::string path, std::function<void(Request &, Response &)> func);
@@ -34,18 +34,14 @@ public:
 
 private:
   bool running;
-  std::unordered_map<std::string, std::function<void(Request &, Response &)>>
-      getMap;
-  std::unordered_map<std::string, std::function<void(Request &, Response &)>>
-      postMap;
+  std::unordered_map<std::string, std::function<void(Request &, Response &)>> getMap;
+  std::unordered_map<std::string, std::function<void(Request &, Response &)>> postMap;
   std::function<void(Request &, Response &)> WSConnected;
+
 
   void cleanup(SOCKET socket);
   void sendFile(const std::string &path, SOCKET client);
   void acceptClient();
-  bool contains(
-      const std::unordered_map<std::string,
-                               std::function<void(Request &, Response &)>> &map,
-      const std::string &key);
+  bool contains( const std::unordered_map<std::string, std::function<void(Request &, Response &)>> &map, const std::string &key);
   void handleClient(Request, Response);
 };

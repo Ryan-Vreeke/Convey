@@ -66,6 +66,8 @@ void Response::sendFile(const std::string &path) {
     contentType = "image/jpeg";
   } else if (ends_with(actualPath, ".png")) {
     contentType = "image/png";
+  } else if (ends_with(actualPath, ".css")) {
+    contentType = "text/css";
   } else {
     contentType = "application/octet-stream";
   }

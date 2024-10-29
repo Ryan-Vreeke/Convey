@@ -68,7 +68,11 @@ void Response::sendFile(const std::string &path) {
     contentType = "image/png";
   } else if (ends_with(actualPath, ".css")) {
     contentType = "text/css";
-  } 
+  } else if (ends_with(actualPath, ".svg")) {
+    contentType = "image/svg+xml";
+  } else {
+    contentType = "application/octet-stream";
+  }
 
   headers.push_back("Connection: close");
   sendResponse();

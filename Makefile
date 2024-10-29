@@ -8,7 +8,7 @@ build/%.o: src/%.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
 libconvey.a: $(OBJ)
-	ar rcs lib/libconvey.a
+	ar rcs lib/libconvey.a $(OBJ)
 
 run: clean Server
 	./build/server

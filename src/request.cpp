@@ -1,4 +1,7 @@
 #include "request.h"
+#include <iostream>
+#include <sstream>
+#include <stdexcept>
 
 // Constructor implementation
 Request::Request(const std::string &rawRequest)
@@ -23,6 +26,14 @@ Request::Request(const std::string &rawRequest)
     std::string key = splitString(header, ": ")[0];
     std::string value = splitString(header, ": ")[1];
     headers[key] = value;
+  }
+
+  // If a Content-Length header exists, parse the body
+  auto contentLengthIt = headers.find("Content-Length");
+  if (contentLengthIt != headers.end()) {
+    size_t contentLength = std::stoi(contentLengthIt->second);
+    body.resize(contentLength);
+    requestStream.read(&body[0], contentLength);
   }
 }
 

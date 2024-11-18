@@ -10,6 +10,9 @@ build/%.o: src/%.cpp
 libconvey.a: $(OBJ)
 	ar rcs lib/libconvey.a $(OBJ)
 
+test: src/test.cpp $(OBJ)
+	$(CC) $(CFLAGS) src/test.cpp $(CCLIB) $(OBJ) -o convey_test
+
 run: clean Server
 	./build/server
 

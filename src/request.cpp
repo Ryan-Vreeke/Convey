@@ -1,30 +1,46 @@
 #include "request.h"
-#include <iostream>
+
 #include <sstream>
 #include <stdexcept>
 
-// Constructor implementation
-Request::Request(const std::string &rawRequest)
+#include "stringUtils.hpp"
+
+Request::Request(const std::string& rawRequest)
     : method(""), httpVersion(""), path(""), clientSocket(-1) {
   std::istringstream requestStream(rawRequest);
   std::string requestLine;
 
   // Parse the request line (first line)
   if (std::getline(requestStream, requestLine)) {
-    std::vector<std::string> requestLineParts = splitString(requestLine, " ");
+    auto requestLineParts = Utils::splitString(requestLine, " ");
     if (requestLineParts.size() < 3) {
       throw std::invalid_argument("Invalid HTTP request line.");
     }
 
     method = requestLineParts[0];
-    path = requestLineParts[1];
+
+    if (Utils::contains(requestLineParts[1], "?")) {
+      auto argsLine = Utils::splitString(requestLineParts[1], "?");
+      path = argsLine[0];
+
+      for (const auto& arg : Utils::splitString(argsLine[1], "&")) {
+        auto pair = Utils::splitString(arg, "=");
+        std::string key = pair[0];
+        std::string value = pair[1];
+
+        args[key] = value;
+      }
+    } else {
+      path = requestLineParts[1];
+    }
+
     httpVersion = requestLineParts[2];
   }
 
   std::string header;
   while (std::getline(requestStream, header) && header != "\r") {
-    std::string key = splitString(header, ": ")[0];
-    std::string value = splitString(header, ": ")[1];
+    std::string key = Utils::splitString(header, ": ")[0];
+    std::string value = Utils::splitString(header, ": ")[1];
     headers[key] = value;
   }
 
@@ -35,21 +51,6 @@ Request::Request(const std::string &rawRequest)
     body.resize(contentLength);
     requestStream.read(&body[0], contentLength);
   }
-}
 
-std::vector<std::string> Request::splitString(const std::string &str,
-                                              const std::string &delimiter) {
-  std::vector<std::string> tokens;
-  size_t start = 0;
-  size_t end = str.find(delimiter);
-
-  while (end != std::string::npos) {
-    tokens.push_back(str.substr(start, end - start));
-    start = end + delimiter.length();
-    end = str.find(delimiter, start);
-  }
-
-  tokens.push_back(str.substr(start));
-
-  return tokens;
+  if (!Utils::ends_with(path, "/")) path += "/";
 }

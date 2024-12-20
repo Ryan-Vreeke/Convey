@@ -20,7 +20,6 @@ public:
   void type(const std::string &type);
   void sendFile(const std::string &path);
 
-  static bool ends_with(const std::string &, const std::string &);
 private:
   std::string message;
   std::string contentType = "text/html"; // Default content type

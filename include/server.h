@@ -1,22 +1,24 @@
 #pragma once
 
-#include "request.h"
-#include "response.h"
 #include <arpa/inet.h>
-#include <functional>
 #include <netinet/in.h>
-#include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+#include <functional>
+#include <string>
 #include <unordered_map>
+
+#include "request.h"
+#include "response.h"
 
 typedef int SOCKET;
 #define INVALID_SOCKET -1
 #define SOCKET_ERROR -1
 
 class Server {
-public:
+ public:
   sockaddr_in address;
   const SOCKET server_fd;
   std::string publicDir;
@@ -32,16 +34,17 @@ public:
 
   void addWSObserver(std::function<void(Request &, Response &)>);
 
-private:
+ private:
   bool running;
   std::unordered_map<std::string, std::function<void(Request &, Response &)>> getMap;
   std::unordered_map<std::string, std::function<void(Request &, Response &)>> postMap;
   std::function<void(Request &, Response &)> WSConnected;
 
-
   void cleanup(SOCKET socket);
   void sendFile(const std::string &path, SOCKET client);
   void acceptClient();
-  bool contains( const std::unordered_map<std::string, std::function<void(Request &, Response &)>> &map, const std::string &key);
+  bool contains(
+      const std::unordered_map<std::string, std::function<void(Request &, Response &)>> &map,
+      const std::string &key);
   void handleClient(Request, Response);
 };

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POST Request Example</title>
+</head>
+<body>
+    <h1>Send POST Request</h1>
+    <button id="sendRequestBtn">Send POST Request</button>
+
+    <script>
+        document.getElementById('sendRequestBtn').addEventListener('click', function() {
+            // Prepare the payload
+            const payload = {
+                test: 'hello'
+            };
+
+            // Send the POST request
+            fetch('http://localhost:8080/post_test/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Response:', data);
+                alert('Request sent successfully!');
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                alert('Error sending the request!');
+            });
+        });
+    </script>
+</body>
+</html>

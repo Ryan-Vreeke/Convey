@@ -1,4 +1,5 @@
 #include "WSMessage.h"
+
 #include "WSFrame.h"
 
 WSMessage::WSMessage() {}

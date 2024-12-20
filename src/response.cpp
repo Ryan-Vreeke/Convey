@@ -1,12 +1,16 @@
 #include "response.h"
+
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
+
+#include "stringUtils.hpp"
 
 Response::Response(int clientSocket, sockaddr_in clientAddress)
     : clientSocket(clientSocket), clientAddress(clientAddress) {}
@@ -27,16 +31,12 @@ void Response::json(const std::string &jsonData) {
 
 void Response::type(const std::string &type) { contentType = type; }
 
-bool fileExists(const std::string &path) {
-  return std::filesystem::exists(path);
-}
+bool fileExists(const std::string &path) { return std::filesystem::exists(path); }
 
 std::string Response::findFileWithExtension(std::string basePath) {
-  if (Response::ends_with(basePath, "/"))
-    basePath.pop_back();
+  if (Utils::ends_with(basePath, "/")) basePath.pop_back();
 
-  if (fileExists(basePath))
-    return basePath;
+  if (fileExists(basePath)) return basePath;
 
   if (fileExists(basePath + ".html")) {
     return basePath + ".html";
@@ -60,15 +60,15 @@ void Response::sendFile(const std::string &path) {
   message = buffer.str();
   contentLength = message.size();
 
-  if (ends_with(actualPath, ".html")) {
+  if (Utils::ends_with(actualPath, ".html")) {
     contentType = "text/html";
-  } else if (ends_with(actualPath, ".jpg") || ends_with(actualPath, ".jpeg")) {
+  } else if (Utils::ends_with(actualPath, ".jpg") || Utils::ends_with(actualPath, ".jpeg")) {
     contentType = "image/jpeg";
-  } else if (ends_with(actualPath, ".png")) {
+  } else if (Utils::ends_with(actualPath, ".png")) {
     contentType = "image/png";
-  } else if (ends_with(actualPath, ".css")) {
+  } else if (Utils::ends_with(actualPath, ".css")) {
     contentType = "text/css";
-  } else if (ends_with(actualPath, ".svg")) {
+  } else if (Utils::ends_with(actualPath, ".svg")) {
     contentType = "image/svg+xml";
   } else {
     contentType = "application/octet-stream";
@@ -101,9 +101,4 @@ std::string Response::generateHeaders() {
 
   headerString << "\r\n";
   return headerString.str();
-}
-
-bool Response::ends_with(const std::string &str, const std::string &suffix) {
-  return str.size() >= suffix.size() &&
-         str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
 }

@@ -1,13 +1,19 @@
-#pragma once
+#ifndef REQUEST_H
+#define REQUEST_H
 
+#ifdef _WIN32
+#include <winsock2.h>
+#else
 #include <netinet/in.h>
+#endif
 
 #include <string>
 #include <unordered_map>
 #include <vector>
 
+namespace Convey {
 class Request {
- public:
+public:
   std::string method;
   std::string httpVersion;
   std::string path;
@@ -21,3 +27,7 @@ class Request {
 
   Request(const std::string &);
 };
+
+};
+
+#endif

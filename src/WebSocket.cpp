@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <vector>
 
+using namespace Convey;
 WebSocket::WebSocket(int socket, sockaddr_in address)
     : m_socket(socket), m_address(address) {}
 

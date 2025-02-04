@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <iostream>
 
+namespace Convey {
 class WSMessage {
 public:
   size_t m_size;
@@ -16,3 +17,4 @@ public:
 
   friend std::ostream &operator<<(std::ostream &os, const WSMessage &obj);
 };
+} // namespace Convey

@@ -5,6 +5,7 @@
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 
+using namespace Convey;
 WebSocketServer::WebSocketServer(Server &server) : m_server(server) {
   server.addWSObserver(std::bind(&WebSocketServer::clientConnected, this,
                                  std::placeholders::_1, std::placeholders::_2));
@@ -43,14 +44,14 @@ void WebSocketServer::onDisconnect(int wSocket) {
   close(wSocket);
 }
 
-std::string sha1(const std::string &input) {
+std::string WebSocketServer::sha1(const std::string &input) {
   unsigned char hash[SHA_DIGEST_LENGTH];
   SHA1(reinterpret_cast<const unsigned char *>(input.c_str()), input.length(),
        hash);
   return std::string(reinterpret_cast<char *>(hash), SHA_DIGEST_LENGTH);
 }
 
-std::string base64_encode(const std::string &input) {
+std::string WebSocketServer::base64_encode(const std::string &input) {
   BIO *bio, *b64;
   BUF_MEM *bufferPtr;
 
@@ -69,7 +70,7 @@ std::string base64_encode(const std::string &input) {
   return encoded_data;
 }
 
-std::string base64_encode(const std::vector<uint8_t> &input) {
+std::string WebSocketServer::base64_encode(const std::vector<uint8_t> &input) {
   BIO *bio, *b64;
   BUF_MEM *bufferPtr;
 

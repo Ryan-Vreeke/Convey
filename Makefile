@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -Wall -Iinclude -Isrc
+CFLAGS = -Wall -Iinclude -Isrc -std=c++20
 SRC = src/test.cpp src/server.cpp src/request.cpp src/response.cpp src/WebSocketServer.cpp src/WebSocket.cpp src/WSFrame.cpp src/WSMessage.cpp
 OBJ = build/server.o build/request.o build/response.o build/WebSocketServer.o build/WebSocket.o build/WSFrame.o build/WSMessage.o
 CCLIB = -lssl -lcrypto

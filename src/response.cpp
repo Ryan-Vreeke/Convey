@@ -12,8 +12,8 @@
 
 #include "stringUtils.hpp"
 
-Response::Response(int clientSocket, sockaddr_in clientAddress)
-    : clientSocket(clientSocket), clientAddress(clientAddress) {}
+using namespace Convey;
+Response::Response(int clientSocket, sockaddr_in clientAddress) : clientSocket(clientSocket), clientAddress(clientAddress) {}
 
 void Response::send(const std::string &body) {
   message = body;

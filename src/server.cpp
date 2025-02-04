@@ -1,5 +1,3 @@
-#include "server.h"
-
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -7,10 +5,14 @@
 #include <cassert>
 #include <functional>
 #include <iostream>
+#include <memory>
 #include <thread>
 
+#include "Convey.h"
+#include "Templar.hpp"
 #include "stringUtils.hpp"
 
+using namespace Convey;
 Server::Server(const std::string publicPath) : server_fd(socket(AF_INET, SOCK_STREAM, 0)) {
   publicDir = publicPath;
   if (Utils::ends_with(publicDir, "/")) {
@@ -117,7 +119,15 @@ void Server::handleClient(Request request, Response response) {
   } else {
     std::string filePath = publicDir + request.path;
     if (request.path == "/") filePath = publicDir + "/index.html";
-    response.sendFile(filePath);
+
+    if (templar && Utils::ends_with(filePath, ".html")) {
+      auto fileContents = templar_ptr->prepFile(filePath);
+
+      response.type("text/html");
+      response.send(fileContents);
+    } else {
+      response.sendFile(filePath);
+    }
   }
 
   close(response.clientSocket);
@@ -125,4 +135,11 @@ void Server::handleClient(Request request, Response response) {
 
 void Server::addWSObserver(std::function<void(Request &, Response &)> callback) {
   WSConnected = callback;
+}
+
+void Server::addTemplator(std::shared_ptr<Templar> temp,
+                          std::function<void(std::string, Block &)> cb) {
+  templar = true;
+  templar_ptr = temp;
+  templCB = cb;
 }

@@ -2,11 +2,13 @@
 
 #include <sstream>
 #include <stdexcept>
+#include <string>
 
 #include "stringUtils.hpp"
 
-Request::Request(const std::string& rawRequest)
-    : method(""), httpVersion(""), path(""), clientSocket(-1) {
+
+using namespace Convey;
+Request::Request(const std::string& rawRequest): method(""), httpVersion(""), path(""), clientSocket(-1) {
   std::istringstream requestStream(rawRequest);
   std::string requestLine;
 

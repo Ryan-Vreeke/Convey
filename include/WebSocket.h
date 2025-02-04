@@ -6,6 +6,7 @@
 #include <functional>
 #include <netinet/in.h>
 #include <thread>
+namespace Convey {
 
 class WebSocket {
 public:
@@ -29,3 +30,4 @@ public:
 private:
   std::thread loopThread;
 };
+} // namespace Convey

@@ -1,10 +1,22 @@
 #pragma once
-#include <fcntl.h>
-#include <netinet/in.h>
+
 #include <string>
-#include <sys/sendfile.h>
 #include <unistd.h>
 #include <vector>
+
+#ifdef _WIN32 // Windows-specific headers
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <windows.h>
+#else // Linux-specific headers
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/sendfile.h>
+#endif
+
+namespace Convey {
 
 class Response {
 public:
@@ -26,9 +38,9 @@ private:
   std::string version = "HTTP/1.1";      // Default HTTP version
   size_t contentLength = 0;
 
-
   std::string findFileWithExtension(std::string basePath);
 
   void sendResponse();
   std::string generateHeaders();
 };
+} // namespace Convey

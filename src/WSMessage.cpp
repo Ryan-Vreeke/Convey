@@ -2,6 +2,7 @@
 
 #include "WSFrame.h"
 
+using namespace Convey;
 WSMessage::WSMessage() {}
 
 WSMessage::WSMessage(uint8_t *msg, size_t size, OPCODE type)

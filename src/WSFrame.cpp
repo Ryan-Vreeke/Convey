@@ -1,16 +1,17 @@
 #include "WSFrame.h"
+
 #include <arpa/inet.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <sys/types.h>
-#include <unistd.h>
 
-WSFrame::WSFrame(uint8_t *buffer, size_t len, int socket)
-    : m_len(len), m_socket(socket) {
-
+using namespace Convey;
+WSFrame::WSFrame(uint8_t *buffer, size_t len, int socket) : m_len(len), m_socket(socket) {
   m_buffer = new uint8_t[len];
   memcpy(m_buffer, buffer, len);
   m_fin = (m_buffer[0] >> 7);
@@ -82,8 +83,7 @@ void WSFrame::extractPayload(const uint8_t *buffer, size_t len) {
   int bytes = 0;
 
   for (size_t j = len; j < m_payloadLen;) {
-    if ((bytes = read(m_socket, buf, CHUNKSIZE)) <= 0)
-      break;
+    if ((bytes = read(m_socket, buf, CHUNKSIZE)) <= 0) break;
 
     for (int i = 0; i < bytes; i++) {
       m_payload[j + i] = decode(buf[i], i % 4);
@@ -116,20 +116,17 @@ void WSFrame::getPayloadLen() {
 }
 
 uint64_t WSFrame::longlongPL() {
-  return make64(
-      make16(m_buffer[2], m_buffer[3]), make16(m_buffer[4], m_buffer[5]),
-      make16(m_buffer[6], m_buffer[7]), make16(m_buffer[8], m_buffer[9]));
+  return make64(make16(m_buffer[2], m_buffer[3]), make16(m_buffer[4], m_buffer[5]),
+                make16(m_buffer[6], m_buffer[7]), make16(m_buffer[8], m_buffer[9]));
 }
 
-uint16_t make16(uint8_t msb, uint8_t lsb) {
+uint16_t WSFrame::make16(uint8_t msb, uint8_t lsb) {
   return (static_cast<uint16_t>(msb) << 8) | lsb;
 }
 
-uint32_t make32(uint16_t msb, uint16_t lsb) {
-  return ((uint32_t)msb << 16) | lsb;
-}
+uint32_t WSFrame::make32(uint16_t msb, uint16_t lsb) { return ((uint32_t)msb << 16) | lsb; }
 
-uint64_t make64(uint16_t m1, uint16_t l1, uint16_t m2, uint16_t l2) {
+uint64_t WSFrame::make64(uint16_t m1, uint16_t l1, uint16_t m2, uint16_t l2) {
   uint32_t MSB = make32(m1, l1);
   uint32_t LSB = make32(m2, l2);
 

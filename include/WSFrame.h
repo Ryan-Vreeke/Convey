@@ -1,22 +1,12 @@
 #pragma once
 #include <cstddef>
 #include <cstdint>
+namespace Convey {
 
-extern uint16_t make16(uint8_t msb, uint8_t lsb);
-extern uint32_t make32(uint16_t msb, uint16_t lsb);
-extern uint64_t make64(uint16_t m1, uint16_t l1, uint16_t m2, uint16_t l2);
-
-enum OPCODE {
-  CONTINUE = 0x0,
-  TEXT = 0x1,
-  BINARY = 0x2,
-  CLOSE = 0x8,
-  PING = 0x9,
-  PONG = 0xA
-};
+enum OPCODE { CONTINUE = 0x0, TEXT = 0x1, BINARY = 0x2, CLOSE = 0x8, PING = 0x9, PONG = 0xA };
 
 class WSFrame {
-public:
+ public:
   uint8_t *m_buffer;
   uint8_t *m_payload;
   OPCODE m_opcode;
@@ -32,7 +22,7 @@ public:
 
   void encodePayload(const uint8_t *buffer, size_t len);
 
-private:
+ private:
   uint8_t maskStart;
   size_t bytesRead = 0;
   int m_socket;
@@ -44,4 +34,9 @@ private:
 
   void getPayloadLen();
   uint64_t longlongPL();
+
+  uint16_t make16(uint8_t msb, uint8_t lsb);
+  uint32_t make32(uint16_t msb, uint16_t lsb);
+  uint64_t make64(uint16_t m1, uint16_t l1, uint16_t m2, uint16_t l2);
 };
+}  // namespace Convey

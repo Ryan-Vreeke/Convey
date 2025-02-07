@@ -13,7 +13,8 @@
 #include "stringUtils.hpp"
 
 using namespace Convey;
-Response::Response(int clientSocket, sockaddr_in clientAddress) : clientSocket(clientSocket), clientAddress(clientAddress) {}
+Response::Response(int clientSocket, sockaddr_in clientAddress)
+    : clientSocket(clientSocket), clientAddress(clientAddress) {}
 
 void Response::send(const std::string &body) {
   message = body;
@@ -45,6 +46,14 @@ std::string Response::findFileWithExtension(std::string basePath) {
   return "";
 }
 
+std::string getFileExtension(const std::string &filePath) {
+  size_t dotPosition = filePath.find_last_of('.');
+  if (dotPosition == std::string::npos || dotPosition == filePath.length() - 1) {
+    return "";
+  }
+  return filePath.substr(dotPosition + 1);
+}
+
 void Response::sendFile(const std::string &path) {
   const std::string actualPath = findFileWithExtension(path);
   std::ifstream file(actualPath);
@@ -60,16 +69,9 @@ void Response::sendFile(const std::string &path) {
   message = buffer.str();
   contentLength = message.size();
 
-  if (Utils::ends_with(actualPath, ".html")) {
-    contentType = "text/html";
-  } else if (Utils::ends_with(actualPath, ".jpg") || Utils::ends_with(actualPath, ".jpeg")) {
-    contentType = "image/jpeg";
-  } else if (Utils::ends_with(actualPath, ".png")) {
-    contentType = "image/png";
-  } else if (Utils::ends_with(actualPath, ".css")) {
-    contentType = "text/css";
-  } else if (Utils::ends_with(actualPath, ".svg")) {
-    contentType = "image/svg+xml";
+  std::string filetype = getFileExtension(actualPath);
+  if (typeSet.count(filetype)) {
+    contentType = typeSet[filetype];
   } else {
     contentType = "application/octet-stream";
   }

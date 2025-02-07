@@ -1,3 +1,4 @@
+#include <asm-generic/socket.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -81,6 +82,12 @@ void Server::startListen(int port, std::function<void(void)> listenLoop) {
   address.sin_family = AF_INET;
   address.sin_addr.s_addr = INADDR_ANY;
   address.sin_port = htons(port);
+  int reuseport = 1;
+
+  if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEPORT, &reuseport, sizeof(reuseport)) < 0) {
+    std::cerr << "Failed to set SO_REUSEPORT\n";
+    return;
+  }
 
   if (bind(server_fd, (sockaddr *)&address, sizeof(address)) == SOCKET_ERROR) {
     std::cerr << "Bind failed.\n";
@@ -119,9 +126,11 @@ void Server::handleClient(Request request, Response response) {
   } else {
     std::string filePath = publicDir + request.path;
     if (request.path == "/") filePath = publicDir + "/index.html";
+    filePath = response.findFileWithExtension(filePath);
 
     if (templar && Utils::ends_with(filePath, ".html")) {
       auto fileContents = templar_ptr->prepFile(filePath);
+      templCB(fileContents, filePath);
 
       response.type("text/html");
       response.send(fileContents);
@@ -137,8 +146,7 @@ void Server::addWSObserver(std::function<void(Request &, Response &)> callback) 
   WSConnected = callback;
 }
 
-void Server::addTemplator(std::shared_ptr<Templar> temp,
-                          std::function<void(std::string, Block &)> cb) {
+void Server::addTemplator(std::shared_ptr<Templar> temp, std::function<void(std::string &, const std::string &)> cb) {
   templar = true;
   templar_ptr = temp;
   templCB = cb;

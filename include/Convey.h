@@ -44,7 +44,7 @@ class Server {
   void startListen(int port, std::function<void(void)> listenLoop);
 
   void addWSObserver(std::function<void(Request &, Response &)>);
-  void addTemplator(std::shared_ptr<Templar>, std::function<void(std::string, Block &)>);
+  void addTemplator(std::shared_ptr<Templar>, std::function<void(std::string &page_content, const std::string &page_name)>);
 
  private:
   bool running;
@@ -53,7 +53,7 @@ class Server {
   std::unordered_map<std::string, std::function<void(Request &, Response &)>> getMap;
   std::unordered_map<std::string, std::function<void(Request &, Response &)>> postMap;
   std::function<void(Request &, Response &)> WSConnected;
-  std::function<void(std::string, Block &)> templCB;
+  std::function<void(std::string &page_content, const std::string &page_name)> templCB;
 
   void cleanup(SOCKET socket);
   void sendFile(const std::string &path, SOCKET client);

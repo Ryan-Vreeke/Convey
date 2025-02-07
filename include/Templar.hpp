@@ -21,7 +21,8 @@ class Templar {
  public:
   Templar(const std::string& pages) : page_dir(pages) { buildBlockSet(); }
 
-  void addVariables(const std::string& block_name, const std::string& var_name, const std::string& value) {
+  void addVariables(const std::string& block_name, const std::string& var_name,
+                    const std::string& value) {
     auto block = block_set[block_name];
     block.variables[var_name] = value;
   }
@@ -48,7 +49,6 @@ class Templar {
     std::regex block_regex(pattern);
     if (!block_set.contains(block_name) || !std::regex_search(html, block_regex)) return;
 
-    std::cout << block_name << std::endl;
     html = std::regex_replace(html, block_regex, block_set[block_name].str());
   }
 
